@@ -32,42 +32,48 @@ def fast_2D(img):
     ans = np.zeros((height, width), dtype=complex)
 
     for column in range(width):
-        ans[:, column] = fast_1D(img[:,column])
+        ans[:, column] = FFT_1D(img[:,column])
 
     for row in range(height):
-        ans[row, :] = fast_1D(ans[row, :])
+        ans[row, :] = FFT_1D(ans[row, :])
 
     return ans
 
-def fast_1D(img):
-    img = np.asarray(img, dtype=complex)
-    height = img.shape[0]
+def FFT_1D(array):
+    array = np.asarray(array, dtype=complex)
+    N = array.shape[0]
 
-
-    if height <= 16:
-        return slow_1D(img)
+    if N == 16:
+        return DFT_Naive(array)
     else:
-        ans = np.zeros(height, dtype=complex)
-        odd = fast_1D(img[1::2])
-        even = fast_1D(img[::2])
+        even = FFT_1D(array[::2])
+        odd = FFT_1D(array[1::2])
+        n_idx = np.arange(N)
+        f = np.exp(-2j * np.pi * n_idx / N)
 
-        half = height//2
-        for h in range(height):
-            ans[h] = even[h % half] + np.exp(-2j * np.pi * h / height) * odd[h % half]
+        return np.concatenate([even + f[:N // 2] * odd,
+          
+                               even + f[N // 2:] * odd])
 
-        return ans
 
-def slow_1D(img):
 
-    img = np.asarray(img, dtype=complex)
-    height = img.shape[0]
-    ans = np.zeros(height, dtype=complex)
+def DFT_Naive(array):
 
-    for i in range(height):
-        for j in range(height):
-            ans[i] += img[j] * np.exp(-2j * np.pi * i * j / height)
+    array = np.asarray(array, dtype=complex)
+    N = array.shape[0]
 
-    return ans
+    X = np.array([[np.exp(-2j * np.pi * v * y / N) for v in range(N)] for y in range(N)])
+    
+    return np.dot(X,array)
+
+def IDFT_Naive(array):
+    array = np.asarray(array,dtype=complex)
+    N = array.shape[0]
+
+    X = np.array([[np.exp(2j * np.pi * v * y / N) for v in range(N)] for y in range(N)])
+    return 1/N * np.dot(X,array)
+
+
 
 def image_pad(dim):
     if dim == 0:
