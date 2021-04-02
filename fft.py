@@ -26,6 +26,57 @@ def mode(mode, image_path):
         plt.subplot(1,2,2), plt.imshow(np.abs(ftt_img), norm=colors.LogNorm()), plt.xticks([]), plt.yticks([])
         plt.show()
 
+    if mode == 2:
+        filt = 0.12
+        n_filt = 1 - filt
+        ftt_img = fast_2D(im)
+        h, w = ftt_img.shape
+        lower_bound_h = int(filt*h)
+        upper_bound_h = int(h*n_filt)
+        lower_bound_w = int(w*filt)
+        upper_bound_w = int(w*n_filt)
+        ftt_img[lower_bound_h:upper_bound_h, :] = 0.0
+        ftt_img[:,lower_bound_w:upper_bound_w] = 0.0
+
+        denoised_img = IDFT_2D(ftt_img).real
+        plt.subplot(1,2,1), plt.imshow(img, cmap = 'gray'), plt.xticks([]), plt.yticks([])
+        plt.subplot(1,2,2), plt.imshow(denoised_img, cmap = 'gray'), plt.xticks([]), plt.yticks([])
+        plt.show()
+
+
+def IDFT_Naive(array):
+    array = np.asarray(array,dtype=complex)
+    N = array.shape[0]
+    X = np.array([[np.exp(2j * np.pi * v * y / N) for v in range(N)] for y in range(N)])
+    return 1/N * np.dot(X,array)
+
+
+
+def IDFT_2D(input2DArray):
+    input2DArray = np.asarray(input2DArray, dtype=complex)
+    return np.array(list(map(lambda a: a / (len(input2DArray) * len(input2DArray[0])), IDFT_fast(IDFT_fast(input2DArray).T).T)))
+
+def IDFT_fast(input2DArray):
+    N = input2DArray.shape[1]
+    if N <= 16:
+        arr = []
+        for i in range(input2DArray.shape[0]):
+            arr.append(IDFT_Naive(input2DArray[i, :]))
+        return np.array(arr)
+
+    else:
+        even = IDFT_fast(input2DArray[:, ::2])
+        odd = IDFT_fast(input2DArray[:, 1::2])
+        fact = []
+        for _ in range(input2DArray.shape[0]):
+            fact.append(np.exp(2j * np.pi * np.arange(N) / N))
+        factor = np.array(fact)
+
+        ans = []
+        ans.append(even + np.multiply(factor[:, :int(N / 2)], odd))
+        ans.append(even + np.multiply(factor[:, int(N / 2):], odd))
+        return np.hstack(ans)
+
 def fast_2D(img):
     img = np.asarray(img, dtype=complex)
     height, width = img.shape
@@ -63,15 +114,9 @@ def DFT_Naive(array):
     N = array.shape[0]
 
     X = np.array([[np.exp(-2j * np.pi * v * y / N) for v in range(N)] for y in range(N)])
-    
+
     return np.dot(X,array)
 
-def IDFT_Naive(array):
-    array = np.asarray(array,dtype=complex)
-    N = array.shape[0]
-
-    X = np.array([[np.exp(2j * np.pi * v * y / N) for v in range(N)] for y in range(N)])
-    return 1/N * np.dot(X,array)
 
 
 
