@@ -43,6 +43,38 @@ def mode(mode, image_path):
         plt.subplot(1,2,2), plt.imshow(denoised_img, cmap = 'gray'), plt.xticks([]), plt.yticks([])
         plt.show()
 
+    if mode==3:
+        ftt_img = fast_2D(im)
+        height, width = ftt_img.shape
+        compession_levels = [19, 38, 57, 76, 95]
+        img_list = []
+        for i in range(5):
+            opp = 100 - compession_levels[i]
+            lower_bound = np.percentile(ftt_img, opp//2)
+            upper_bound = np.percentile(ftt_img, 100 - opp//2)
+            filtered = ftt_img * np.logical_or(ftt_img <= lower_bound, ftt_img >= upper_bound)
+            inversed = IDFT_2D(filtered).real
+            img_list.append(inversed)
+        
+        plt.subplot(2,3,1), plt.imshow(img, cmap = 'gray'), plt.xticks([]), plt.yticks([])
+        plt.subplot(2,3,2), plt.imshow(img_list[0], cmap = 'gray'), plt.xticks([]), plt.yticks([])
+        plt.subplot(2,3,3), plt.imshow(img_list[1], cmap = 'gray'), plt.xticks([]), plt.yticks([])
+        plt.subplot(2,3,4), plt.imshow(img_list[2], cmap = 'gray'), plt.xticks([]), plt.yticks([])
+        plt.subplot(2,3,5), plt.imshow(img_list[3], cmap = 'gray'), plt.xticks([]), plt.yticks([])
+        plt.subplot(2,3,6), plt.imshow(img_list[4], cmap = 'gray'), plt.xticks([]), plt.yticks([])
+
+        plt.show()
+
+
+def filter_mode_three(height, width, img, level):
+    for i in range(width):
+        for j in range(height):
+            if (int(abs(img[j,i]))< level):
+                img[j,i] = complex(0,0)
+
+    return img
+
+
 
 def IDFT_Naive(array):
     array = np.asarray(array,dtype=complex)
