@@ -4,7 +4,8 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
-
+import time
+import statistics
 def mode(mode, image_path):
     #read in image
 
@@ -64,6 +65,40 @@ def mode(mode, image_path):
         plt.subplot(2,3,6), plt.imshow(img_list[4], cmap = 'gray'), plt.xticks([]), plt.yticks([])
 
         plt.show()
+
+    if mode == 4:
+        count = 5
+        lower_bound = 2**count
+        num_of_runs = 10
+        dft_mean = []
+        dft_sd = []
+        size = []
+        while lower_bound <= 2**10:
+            size.append(lower_bound)
+            print(f'executing for size {lower_bound}')
+            arr = np.random.rand(lower_bound, lower_bound)
+
+            timer_arr = []
+            for i in range(num_of_runs):
+                start = time.time()
+                fast_2D(arr)
+                end = time.time() - start
+                timer_arr.append(end)
+
+            mean = statistics.mean(timer_arr)
+            dft_mean.append(mean)
+            sd = statistics.stdev(timer_arr)
+            dft_sd.append(sd)
+            print(f'for 10 runs the mean was {mean} and the standard deviation was {sd}')
+
+            count = count + 1
+            lower_bound = 2**count
+
+        plt.subplot(1, 3, 1), plt.errorbar(size, dft_mean, yerr=dft_sd, fmt='b'),  plt.plot(size, dft_mean, label='DFT mean'), plt.xlabel('Size'), plt.ylabel('Runtime Mean')
+        plt.subplot(1, 3, 3), plt.plot(size, dft_sd, label='DFT SD'), plt.xlabel('Size'), plt.ylabel('Runtime SD')
+        plt.show()
+
+
 
 
 def filter_mode_three(height, width, img, level):
